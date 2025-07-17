@@ -12,7 +12,7 @@ import { Progress } from './components/ui/progress'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './components/ui/table'
 import { Separator } from './components/ui/separator'
 import { AlertTriangle, Plane, Users, Clock, TrendingUp, Settings, FileText, Plus, Filter, BarChart3, Download, UserCheck, ClockIcon, CheckSquare, Menu, X, Zap, Wrench, Fuel, Calendar, Brain, Activity, Shield, Target } from 'lucide-react'
-import flydubaiLogo from 'figma:asset/21e1153ed6bafa9f5f5e48012e7cef21c978235c.png'
+// Removed figma asset import - replace with actual image if needed
 import { WorldMap } from './components/WorldMap'
 import { KPIWidgets } from './components/KPIWidgets'
 import { DisruptionInput } from './components/DisruptionInput'
@@ -98,7 +98,7 @@ export default function App() {
 
   const handleScreenSettingsChange = (newSettings) => {
     setScreenSettings(newSettings)
-    
+
     // If the current active screen is disabled, switch to dashboard
     const currentScreen = newSettings.find(s => s.id === activeScreen)
     if (currentScreen && !currentScreen.enabled) {
@@ -192,10 +192,10 @@ export default function App() {
         <div className="flex-1 overflow-y-auto py-4">
           {Object.entries(categories).map(([categoryKey, category]) => {
             const categoryScreens = enabledScreens.filter(screen => screen.category === categoryKey)
-            
+
             // Don't render category if no enabled screens
             if (categoryScreens.length === 0) return null
-            
+
             return (
               <div key={categoryKey} className="mb-6">
                 {sidebarOpen && (
@@ -205,12 +205,12 @@ export default function App() {
                     </h3>
                   </div>
                 )}
-                
+
                 <div className="space-y-1 px-2">
                   {categoryScreens.map((screen) => {
                     const Icon = screen.icon
                     const isActive = activeScreen === screen.id
-                    
+
                     return (
                       <Button
                         key={screen.id}
@@ -265,7 +265,7 @@ export default function App() {
                 Flydubai AERON - AI-powered recovery and operational excellence
               </p>
             </div>
-            
+
             {quickStats && (
               <div className={`flex items-center gap-3 px-4 py-2 bg-${quickStats.color === 'flydubai-blue' ? 'blue' : quickStats.color === 'flydubai-orange' ? 'orange' : 'blue'}-50 rounded-lg border border-${quickStats.color === 'flydubai-blue' ? 'blue' : quickStats.color === 'flydubai-orange' ? 'orange' : 'blue'}-200`}>
                 {React.createElement(quickStats.icon, { className: `h-4 w-4 text-${quickStats.color === 'flydubai-blue' ? 'blue' : quickStats.color === 'flydubai-orange' ? 'orange' : 'blue'}-600` })}
@@ -291,14 +291,14 @@ export default function App() {
           )}
 
           {activeScreen === 'flight-tracking' && <FlightTrackingGantt />}
-          
+
           {activeScreen === 'disruption' && (
             <DisruptionInput 
               disruption={selectedDisruption}
               onSelectFlight={handleSelectFlight}
             />
           )}
-          
+
           {activeScreen === 'recovery' && (
             <RecoveryOptionsGenerator 
               selectedFlight={selectedFlight}
@@ -306,14 +306,14 @@ export default function App() {
               onCompare={() => setActiveScreen('comparison')}
             />
           )}
-          
+
           {activeScreen === 'comparison' && (
             <ComparisonMatrix 
               selectedFlight={selectedFlight}
               onSelectPlan={handleSelectRecoveryPlan}
             />
           )}
-          
+
           {activeScreen === 'detailed' && (
             <DetailedRecoveryPlan 
               plan={selectedRecoveryPlan}
@@ -328,15 +328,15 @@ export default function App() {
           {activeScreen === 'risk-assessment' && <RiskAssessment />}
 
           {activeScreen === 'pending' && <PendingSolutions />}
-          
+
           {activeScreen === 'past-logs' && <PastRecoveryLogs />}
 
           {activeScreen === 'maintenance' && <AircraftMaintenance />}
-          
+
           {activeScreen === 'passengers' && <PassengerRebooking />}
 
           {activeScreen === 'fuel-optimization' && <FuelOptimization />}
-          
+
           {activeScreen === 'reports' && <AuditReporting />}
 
           {activeScreen === 'settings' && (
@@ -345,7 +345,7 @@ export default function App() {
               onScreenSettingsChange={handleScreenSettingsChange}
             />
           )}
-          
+
           {activeScreen === 'audit' && (
             <AuditLogsScreen />
           )}
@@ -517,7 +517,7 @@ function DashboardScreen({ filters, setFilters, onCreateRecoveryPlan, setActiveS
             Flight Tracking Gantt
           </Button>
         )}
-        
+
         {enabledScreens.find(s => s.id === 'pending') && (
           <Button 
             variant="outline" 
@@ -528,7 +528,7 @@ function DashboardScreen({ filters, setFilters, onCreateRecoveryPlan, setActiveS
             View Pending Solutions
           </Button>
         )}
-        
+
         {enabledScreens.find(s => s.id === 'past-logs') && (
           <Button 
             variant="outline" 
@@ -539,7 +539,7 @@ function DashboardScreen({ filters, setFilters, onCreateRecoveryPlan, setActiveS
             Past Recovery Logs
           </Button>
         )}
-        
+
         {enabledScreens.find(s => s.id === 'passengers') && (
           <Button 
             variant="outline" 
@@ -550,7 +550,7 @@ function DashboardScreen({ filters, setFilters, onCreateRecoveryPlan, setActiveS
             Passenger Services
           </Button>
         )}
-        
+
         {enabledScreens.find(s => s.id === 'reports') && (
           <Button 
             variant="outline" 
