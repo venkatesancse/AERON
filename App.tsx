@@ -12,7 +12,6 @@ import { Progress } from './components/ui/progress'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './components/ui/table'
 import { Separator } from './components/ui/separator'
 import { AlertTriangle, Plane, Users, Clock, TrendingUp, Settings, FileText, Plus, Filter, BarChart3, Download, UserCheck, ClockIcon, CheckSquare, Menu, X, Zap, Wrench, Fuel, Calendar, Brain, Activity, Shield, Target } from 'lucide-react'
-// Removed figma asset import - replace with actual image if needed
 import { WorldMap } from './components/WorldMap'
 import { KPIWidgets } from './components/KPIWidgets'
 import { DisruptionInput } from './components/DisruptionInput'
@@ -150,12 +149,10 @@ export default function App() {
           <div className="flex items-center justify-between">
             {sidebarOpen && (
               <div className="flex flex-col items-center gap-2">
-                {/* flydubai Logo */}
-                <img 
-                  src={flydubaiLogo} 
-                  alt="Flydubai" 
-                  className="h-9 w-auto object-contain"
-                />
+                {/* flydubai Logo Placeholder */}
+                <div className="h-9 w-24 bg-white/10 rounded flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">flydubai</span>
+                </div>
                 <div className="text-center">
                   <h1 className="text-base font-semibold text-white">
                     AERON
@@ -169,11 +166,9 @@ export default function App() {
             {!sidebarOpen && (
               <div className="flex items-center justify-center w-full">
                 <div className="relative">
-                  <img 
-                    src={flydubaiLogo} 
-                    alt="Flydubai" 
-                    className="h-6 w-auto object-contain"
-                  />
+                  <div className="h-6 w-16 bg-white/10 rounded flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">FZ</span>
+                  </div>
                 </div>
               </div>
             )}
