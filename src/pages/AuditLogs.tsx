@@ -1,11 +1,10 @@
-
 'use client'
 
 import React from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
-import { Button } from '../components/ui/button'
-import { Badge } from '../components/ui/badge'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table'
+import { Card, CardContent, CardHeader, CardTitle } from '../components/components/ui/card'
+import { Button } from '../components/components/ui/button'
+import { Badge } from '../components/components/ui/badge'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/components/ui/table'
 import { Filter, Download } from 'lucide-react'
 
 export default function AuditLogs() {

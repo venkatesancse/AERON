@@ -1,12 +1,11 @@
-
 'use client'
 
 import React from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
-import { Button } from '../components/ui/button'
-import { Badge } from '../components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
-import { Input } from '../components/ui/input'
+import { Card, CardContent, CardHeader, CardTitle } from '../components/components/ui/card'
+import { Button } from '../components/components/ui/button'
+import { Badge } from '../components/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/components/ui/select'
+import { Input } from '../components/components/ui/input'
 import { Alert, AlertDescription } from '../components/ui/alert'
 import { AlertTriangle, Filter, BarChart3, Plus, Brain, Calendar, ClockIcon, CheckSquare, UserCheck } from 'lucide-react'
 import { WorldMap } from '../components/WorldMap'

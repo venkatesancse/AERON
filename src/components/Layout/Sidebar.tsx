@@ -1,9 +1,8 @@
-
 'use client'
 
 import React from 'react'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
+import { Button } from '../components/ui/button'
+import { Badge } from '../components/ui/badge'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ScreenSettings } from '../../types'
 
@@ -16,7 +15,7 @@ interface SidebarProps {
 export default function Sidebar({ screenSettings, sidebarOpen }: SidebarProps) {
   const location = useLocation()
   const navigate = useNavigate()
-  
+
   const enabledScreens = screenSettings.filter(screen => screen.enabled)
 
   const categories = {
@@ -70,8 +69,8 @@ export default function Sidebar({ screenSettings, sidebarOpen }: SidebarProps) {
       '/maintenance': 'maintenance',
       '/passengers': 'passengers',
       '/fuel-optimization': 'fuel-optimization',
-      '/reports': 'reports',
-      '/audit': 'audit',
+      '/reports': '/reports',
+      '/audit': '/audit',
       '/settings': 'settings'
     }
     return routeMap[pathname] || 'dashboard'

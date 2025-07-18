@@ -1,4 +1,3 @@
-
 'use client'
 
 import React from 'react'
@@ -12,7 +11,7 @@ interface HeaderProps {
 
 export default function Header({ screenSettings, quickStats }: HeaderProps) {
   const location = useLocation()
-  
+
   const getScreenIdFromRoute = (pathname: string) => {
     const routeMap: { [key: string]: string } = {
       '/': 'dashboard',
