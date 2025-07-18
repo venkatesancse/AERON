@@ -1,179 +1,132 @@
 'use client'
 
 import React from 'react'
+import { useLocation } from 'react-router-dom'
 import { Button } from '../components/ui/button'
-import { Badge } from '../components/ui/badge'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { cn } from '../components/ui/utils'
+import { 
+  Home, 
+  BarChart3, 
+  Calendar, 
+  ClockIcon, 
+  CheckSquare, 
+  UserCheck, 
+  Brain, 
+  Plane, 
+  Settings, 
+  FileText,
+  X
+} from 'lucide-react'
 import { ScreenSettings } from '../../types'
 
 interface SidebarProps {
-  screenSettings: ScreenSettings[]
-  sidebarOpen: boolean
-  setSidebarOpen: (open: boolean) => void
+  enabledScreens: ScreenSettings[]
+  navigateToScreen: (screenId: string) => void
+  isOpen: boolean
+  onClose: () => void
 }
 
-export default function Sidebar({ screenSettings, sidebarOpen }: SidebarProps) {
+export default function Sidebar({ enabledScreens, navigateToScreen, isOpen, onClose }: SidebarProps) {
   const location = useLocation()
-  const navigate = useNavigate()
 
-  const enabledScreens = screenSettings.filter(screen => screen.enabled)
+  const menuItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/' },
+    { id: 'flight-tracking', label: 'Flight Tracking', icon: Calendar, path: '/flight-tracking' },
+    { id: 'prediction-dashboard', label: 'Disruption Prediction', icon: Brain, path: '/prediction' },
+    { id: 'pending', label: 'Pending Solutions', icon: ClockIcon, path: '/pending' },
+    { id: 'past-logs', label: 'Recovery Logs', icon: CheckSquare, path: '/logs' },
+    { id: 'passengers', label: 'Passenger Services', icon: UserCheck, path: '/passengers' },
+    { id: 'reports', label: 'Analytics', icon: BarChart3, path: '/reports' },
+    { id: 'audit-logs', label: 'Audit Logs', icon: FileText, path: '/audit-logs' },
+  ]
 
-  const categories = {
-    main: { name: 'Main', color: 'text-flydubai-blue' },
-    operations: { name: 'Operations', color: 'text-flydubai-blue' },
-    prediction: { name: 'Prediction', color: 'text-flydubai-navy' },
-    monitoring: { name: 'Monitoring', color: 'text-flydubai-navy' },
-    services: { name: 'Services', color: 'text-flydubai-blue' },
-    analytics: { name: 'Analytics', color: 'text-flydubai-navy' },
-    system: { name: 'System', color: 'text-gray-600' }
-  }
-
-  const getRouteFromScreenId = (screenId: string) => {
-    const routeMap: { [key: string]: string } = {
-      'dashboard': '/',
-      'flight-tracking': '/flight-tracking',
-      'disruption': '/disruption',
-      'recovery': '/recovery',
-      'comparison': '/comparison',
-      'detailed': '/detailed',
-      'prediction-dashboard': '/prediction-dashboard',
-      'flight-disruption-list': '/flight-disruption-list',
-      'prediction-analytics': '/prediction-analytics',
-      'risk-assessment': '/risk-assessment',
-      'pending': '/pending',
-      'past-logs': '/past-logs',
-      'maintenance': '/maintenance',
-      'passengers': '/passengers',
-      'fuel-optimization': '/fuel-optimization',
-      'reports': '/reports',
-      'audit': '/audit',
-      'settings': '/settings'
-    }
-    return routeMap[screenId] || '/'
-  }
-
-  const getScreenIdFromRoute = (pathname: string) => {
-    const routeMap: { [key: string]: string } = {
-      '/': 'dashboard',
-      '/flight-tracking': 'flight-tracking',
-      '/disruption': 'disruption',
-      '/recovery': 'recovery',
-      '/comparison': 'comparison',
-      '/detailed': 'detailed',
-      '/prediction-dashboard': 'prediction-dashboard',
-      '/flight-disruption-list': 'flight-disruption-list',
-      '/prediction-analytics': 'prediction-analytics',
-      '/risk-assessment': 'risk-assessment',
-      '/pending': 'pending',
-      '/past-logs': 'past-logs',
-      '/maintenance': 'maintenance',
-      '/passengers': 'passengers',
-      '/fuel-optimization': 'fuel-optimization',
-      '/reports': '/reports',
-      '/audit': '/audit',
-      '/settings': 'settings'
-    }
-    return routeMap[pathname] || 'dashboard'
-  }
-
-  const activeScreen = getScreenIdFromRoute(location.pathname)
+  const filteredMenuItems = menuItems.filter(item => 
+    item.id === 'dashboard' || enabledScreens.find(screen => screen.id === item.id)
+  )
 
   return (
-    <div className="w-64 bg-flydubai-blue text-white border-r border-blue-700 flex flex-col">
-      {/* Sidebar Header - flydubai Branding */}
-      <div className="p-4 border-b border-blue-700">
-        <div className="flex items-center justify-between">
-          {sidebarOpen && (
-            <div className="flex flex-col items-center gap-2">
-              {/* flydubai Logo Placeholder */}
-              <div className="h-9 w-24 bg-white/10 rounded flex items-center justify-center">
-                <span className="text-white text-xs font-bold">flydubai</span>
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={cn(
+        "fixed left-0 top-0 h-full bg-flydubai-navy text-white transition-transform duration-300 ease-in-out z-50",
+        "w-64 md:w-72 lg:w-80",
+        "md:relative md:translate-x-0",
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <div className="flex flex-col h-full">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-blue-800 md:hidden">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-flydubai-orange rounded-lg flex items-center justify-center font-bold text-sm">
+                A
               </div>
-              <div className="text-center">
-                <h1 className="text-base font-semibold text-white">
-                  AERON
-                </h1>
-                <p className="text-xs text-blue-200 leading-tight">
-                  Adaptive Engine for Recovery &<br />Operational Navigation
-                </p>
-              </div>
+              <h2 className="text-lg font-bold">AERON</h2>
             </div>
-          )}
-          {!sidebarOpen && (
-            <div className="flex items-center justify-center w-full">
-              <div className="relative">
-                <div className="h-6 w-16 bg-white/10 rounded flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">FZ</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Navigation Menu */}
-      <div className="flex-1 overflow-y-auto py-4">
-        {Object.entries(categories).map(([categoryKey, category]) => {
-          const categoryScreens = enabledScreens.filter(screen => screen.category === categoryKey)
-
-          // Don't render category if no enabled screens
-          if (categoryScreens.length === 0) return null
-
-          return (
-            <div key={categoryKey} className="mb-6">
-              {sidebarOpen && (
-                <div className="px-4 mb-2">
-                  <h3 className="text-xs font-medium uppercase tracking-wider text-blue-200">
-                    {category.name}
-                  </h3>
-                </div>
-              )}
-
-              <div className="space-y-1 px-2">
-                {categoryScreens.map((screen) => {
-                  const Icon = screen.icon
-                  const isActive = activeScreen === screen.id
-                  const route = getRouteFromScreenId(screen.id)
-
-                  return (
-                    <Button
-                      key={screen.id}
-                      variant={isActive ? "default" : "ghost"}
-                      className={`w-full justify-start gap-3 ${sidebarOpen ? 'px-3' : 'px-2'} ${isActive ? 'bg-white text-flydubai-blue hover:bg-gray-100' : 'text-white hover:text-[#ff8200]'}`}
-                      onClick={() => navigate(route)}
-                    >
-                      <Icon className="h-4 w-4 flex-shrink-0" />
-                      {sidebarOpen && <span className="truncate">{screen.name}</span>}
-                    </Button>
-                  )
-                })}
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Sidebar Footer - flydubai Partnership */}
-      <div className="p-4 border-t border-blue-700">
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
-            Online
-          </Badge>
-          {sidebarOpen && (
-            <div className="text-right flex-1">
-              <p className="text-xs font-medium text-white">Friday, January 10, 2025</p>
-              <p className="text-xs text-blue-200">14:32 GST</p>
-            </div>
-          )}
-        </div>
-        {sidebarOpen && (
-          <div className="mt-2 pt-2 border-t border-blue-700">
-            <p className="text-xs text-blue-200">
-              Powered by Flydubai × AERON Partnership
-            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="hover:bg-blue-800 p-2"
+            >
+              <X className="h-5 w-5" />
+            </Button>
           </div>
-        )}
-      </div>
-    </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+            {filteredMenuItems.map((item) => {
+              const Icon = item.icon
+              const isActive = location.pathname === item.path
+
+              return (
+                <Button
+                  key={item.id}
+                  variant="ghost"
+                  onClick={() => {
+                    navigateToScreen(item.id)
+                    onClose() // Close sidebar on mobile after navigation
+                  }}
+                  className={cn(
+                    "w-full justify-start gap-3 h-12 text-left hover:bg-blue-800 transition-colors",
+                    isActive && "bg-flydubai-orange hover:bg-orange-600"
+                  )}
+                >
+                  <Icon className="h-5 w-5 flex-shrink-0" />
+                  <span className="truncate">{item.label}</span>
+                </Button>
+              )
+            })}
+          </nav>
+
+          {/* Footer */}
+          <div className="p-4 border-t border-blue-800">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                navigateToScreen('settings')
+                onClose()
+              }}
+              className="w-full justify-start gap-3 h-12 hover:bg-blue-800"
+            >
+              <Settings className="h-5 w-5" />
+              <span>Settings</span>
+            </Button>
+
+            <div className="mt-4 text-xs text-blue-200">
+              <p className="font-medium">Flydubai Operations</p>
+              <p>AERON v2.1.0</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </>
   )
 }

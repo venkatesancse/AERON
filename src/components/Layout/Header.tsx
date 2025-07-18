@@ -2,7 +2,68 @@
 
 import React from 'react'
 import { useLocation } from 'react-router-dom'
+import { Button } from '../components/ui/button'
+import { Menu, X, Bell, Settings, User } from 'lucide-react'
 import { ScreenSettings } from '../../types'
+
+interface HeaderProps {
+  onToggleSidebar: () => void
+  isSidebarOpen: boolean
+}
+
+export default function Header({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
+  return (
+    <header className="bg-flydubai-navy text-white shadow-lg sticky top-0 z-50">
+      <div className="flex items-center justify-between px-4 py-3 sm:px-6">
+        {/* Left section */}
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleSidebar}
+            className="md:hidden hover:bg-blue-800 p-2"
+          >
+            {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+          
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-flydubai-orange rounded-lg flex items-center justify-center font-bold text-sm">
+              A
+            </div>
+            <div className="hidden sm:block">
+              <h1 className="text-lg font-bold">AERON</h1>
+              <p className="text-xs text-blue-200 hidden lg:block">Aircraft Emergency Recovery Operations Network</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Center section - Status indicator */}
+        <div className="hidden md:flex items-center gap-2 bg-blue-800 px-3 py-1 rounded-full">
+          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+          <span className="text-sm">System Active</span>
+        </div>
+
+        {/* Right section */}
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" className="hover:bg-blue-800 p-2">
+            <Bell className="h-4 w-4" />
+            <span className="sr-only">Notifications</span>
+          </Button>
+          
+          <Button variant="ghost" size="sm" className="hover:bg-blue-800 p-2 hidden sm:flex">
+            <Settings className="h-4 w-4" />
+            <span className="sr-only">Settings</span>
+          </Button>
+
+          <Button variant="ghost" size="sm" className="hover:bg-blue-800 p-2">
+            <User className="h-4 w-4" />
+            <span className="sr-only">Profile</span>
+          </Button>
+        </div>
+      </div>
+    </header>
+  )
+}
 
 interface HeaderProps {
   screenSettings: ScreenSettings[]

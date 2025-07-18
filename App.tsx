@@ -31,6 +31,18 @@ import Header from './src/components/Layout/Header'
 import Dashboard from './src/pages/Dashboard'
 import AuditLogs from './src/pages/AuditLogs'
 
+import React, { useState } from 'react'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { cn } from './src/components/components/ui/utils'
+
+// Layout Components
+import Header from './src/components/Layout/Header'
+import Sidebar from './src/components/Layout/Sidebar'
+
+// Pages
+import Dashboard from './src/pages/Dashboard'
+import AuditLogs from './src/pages/AuditLogs'
+
 // Feature Components
 import { FlightTrackingGantt } from './src/components/components/FlightTrackingGantt'
 import { DisruptionInput } from './src/components/components/DisruptionInput'
@@ -52,6 +64,89 @@ import { RiskAssessment } from './src/components/components/RiskAssessment'
 // Hooks and Types
 import { useNavigation } from './src/hooks/useNavigation'
 import { FilterState, ScreenSettings } from './src/types'
+
+export default function App() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  
+  // Initialize filters state
+  const [filters, setFilters] = useState<FilterState>({
+    flightNumber: '',
+    station: '',
+    region: '',
+    dateTime: ''
+  })
+
+  // Sample enabled screens - you can modify this based on your needs
+  const enabledScreens: ScreenSettings[] = [
+    { id: 'flight-tracking', name: 'Flight Tracking', enabled: true },
+    { id: 'prediction-dashboard', name: 'Disruption Prediction', enabled: true },
+    { id: 'pending', name: 'Pending Solutions', enabled: true },
+    { id: 'past-logs', name: 'Recovery Logs', enabled: true },
+    { id: 'passengers', name: 'Passenger Services', enabled: true },
+    { id: 'reports', name: 'Analytics', enabled: true },
+    { id: 'audit-logs', name: 'Audit Logs', enabled: true },
+  ]
+
+  const navigateToScreen = (screenId: string) => {
+    // Handle navigation logic here
+    console.log('Navigating to:', screenId)
+  }
+
+  const onCreateRecoveryPlan = (disruption: any) => {
+    // Handle recovery plan creation
+    console.log('Creating recovery plan for:', disruption)
+  }
+
+  return (
+    <Router>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <Header 
+          onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          isSidebarOpen={isSidebarOpen}
+        />
+
+        <div className="flex h-[calc(100vh-64px)]">
+          {/* Sidebar */}
+          <Sidebar
+            enabledScreens={enabledScreens}
+            navigateToScreen={navigateToScreen}
+            isOpen={isSidebarOpen}
+            onClose={() => setIsSidebarOpen(false)}
+          />
+
+          {/* Main Content */}
+          <main className={cn(
+            "flex-1 overflow-auto transition-all duration-300",
+            "md:ml-0" // Remove left margin on desktop since sidebar is relative
+          )}>
+            <div className="max-w-7xl mx-auto">
+              <Routes>
+                <Route 
+                  path="/" 
+                  element={
+                    <Dashboard
+                      filters={filters}
+                      setFilters={setFilters}
+                      onCreateRecoveryPlan={onCreateRecoveryPlan}
+                      enabledScreens={enabledScreens}
+                      navigateToScreen={navigateToScreen}
+                    />
+                  } 
+                />
+                <Route 
+                  path="/audit-logs" 
+                  element={<AuditLogs />} 
+                />
+                {/* Add more routes as needed */}
+              </Routes>
+            </div>
+          </main>
+        </div>
+      </div>
+    </Router>
+  )
+}
 
 export default function App() {
   const navigate = useNavigate()
