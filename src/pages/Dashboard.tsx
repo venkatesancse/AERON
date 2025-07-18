@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Input } from '../components/components/ui/input'
 import { Alert, AlertDescription } from '../components/components/ui/alert'
 import { AlertTriangle, Filter, BarChart3, Plus, Brain, Calendar, ClockIcon, CheckSquare, UserCheck } from 'lucide-react'
-import { WorldMap } from '../components/WorldMap'
+import { WorldMap } from '../components/components/WorldMap'
 import { FilterState, ScreenSettings } from '../types'
 
 interface DashboardProps {
