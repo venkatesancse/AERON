@@ -250,6 +250,91 @@ function getTimeAgo(date) {
   return `${diffDays} days ago`;
 }
 
+// Insert sample data endpoint
+app.post("/api/insert-sample-data", async (req, res) => {
+  try {
+    console.log('Inserting sample disruption data...');
+    
+    // First, insert some sample flights if they don't exist
+    const flightInsertQuery = `
+      INSERT INTO flights (flight_number, origin_airport, destination_airport, scheduled_departure, scheduled_arrival, estimated_departure, estimated_arrival, status, passengers_booked, crew_count, gate, terminal, aircraft_id) 
+      VALUES 
+        ('FZ215', 'DXB', 'BOM', '2025-01-10 15:30:00', '2025-01-10 20:15:00', '2025-01-10 17:30:00', '2025-01-10 22:15:00', 'delayed', 189, 6, 'B12', '2', 1),
+        ('FZ203', 'DXB', 'DEL', '2025-01-10 16:45:00', '2025-01-10 21:20:00', null, null, 'cancelled', 195, 6, 'A08', '2', 2),
+        ('FZ235', 'KHI', 'DXB', '2025-01-10 08:30:00', '2025-01-10 11:45:00', '2025-01-10 11:30:00', '2025-01-10 14:45:00', 'delayed', 181, 6, 'C15', '2', 3),
+        ('FZ147', 'IST', 'DXB', '2025-01-10 21:15:00', '2025-01-11 04:30:00', '2025-01-10 22:00:00', '2025-01-11 05:15:00', 'delayed', 189, 6, 'A22', '3', 4),
+        ('FZ181', 'DXB', 'COK', '2025-01-10 14:20:00', '2025-01-10 19:45:00', '2025-01-10 15:50:00', '2025-01-10 21:15:00', 'delayed', 175, 6, 'B08', '2', 5)
+      ON CONFLICT (flight_number, scheduled_departure) DO NOTHING
+    `;
+    
+    await pool.query(flightInsertQuery);
+    
+    // Then insert disruptions for these flights
+    const disruptionInsertQuery = `
+      INSERT INTO disruptions (flight_id, disruption_type_id, title, description, severity, status, passengers_affected, connecting_flights_affected, reported_at, updated_at) 
+      SELECT 
+        f.id,
+        dt.id,
+        CASE 
+          WHEN f.flight_number = 'FZ215' THEN 'Sandstorm at DXB'
+          WHEN f.flight_number = 'FZ203' THEN 'Severe fog at DEL'
+          WHEN f.flight_number = 'FZ235' THEN 'Air traffic congestion'
+          WHEN f.flight_number = 'FZ147' THEN 'Crew duty time exceeded'
+          WHEN f.flight_number = 'FZ181' THEN 'Technical maintenance check'
+        END,
+        CASE 
+          WHEN f.flight_number = 'FZ215' THEN 'Departure delayed due to sandstorm conditions at Dubai International Airport'
+          WHEN f.flight_number = 'FZ203' THEN 'Flight cancelled due to severe fog conditions at Delhi Airport'
+          WHEN f.flight_number = 'FZ235' THEN 'Diverted due to air traffic congestion at destination'
+          WHEN f.flight_number = 'FZ147' THEN 'Delayed due to crew duty time limitations'
+          WHEN f.flight_number = 'FZ181' THEN 'Delayed for scheduled technical maintenance check'
+        END,
+        CASE 
+          WHEN f.flight_number IN ('FZ215', 'FZ203') THEN 'high'
+          WHEN f.flight_number = 'FZ235' THEN 'high'
+          ELSE 'medium'
+        END,
+        'active',
+        f.passengers_booked,
+        CASE 
+          WHEN f.flight_number = 'FZ215' THEN 8
+          WHEN f.flight_number = 'FZ203' THEN 5
+          WHEN f.flight_number = 'FZ235' THEN 7
+          WHEN f.flight_number = 'FZ147' THEN 4
+          WHEN f.flight_number = 'FZ181' THEN 3
+        END,
+        NOW() - INTERVAL '2 minutes',
+        NOW()
+      FROM flights f
+      CROSS JOIN disruption_types dt
+      WHERE f.flight_number IN ('FZ215', 'FZ203', 'FZ235', 'FZ147', 'FZ181')
+        AND f.scheduled_departure >= CURRENT_DATE
+        AND dt.category = CASE 
+          WHEN f.flight_number IN ('FZ215', 'FZ203') THEN 'weather'
+          WHEN f.flight_number = 'FZ235' THEN 'air_traffic'
+          WHEN f.flight_number = 'FZ147' THEN 'crew'
+          WHEN f.flight_number = 'FZ181' THEN 'technical'
+        END
+        AND NOT EXISTS (
+          SELECT 1 FROM disruptions d2 
+          WHERE d2.flight_id = f.id 
+            AND d2.status IN ('active', 'resolving')
+        )
+    `;
+    
+    const result = await pool.query(disruptionInsertQuery);
+    console.log(`Inserted ${result.rowCount} sample disruptions`);
+    
+    res.json({ 
+      success: true, 
+      message: `Sample data inserted successfully. Added ${result.rowCount} disruptions.` 
+    });
+  } catch (error) {
+    console.error("Error inserting sample data:", error);
+    res.status(500).json({ error: "Failed to insert sample data" });
+  }
+});
+
 app.listen(port, "0.0.0.0", () => {
   console.log(`API server running on http://0.0.0.0:${port}`);
 });
