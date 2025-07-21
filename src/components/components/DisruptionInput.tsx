@@ -61,19 +61,45 @@ export function DisruptionInput({ onSelectFlight }) {
     fetchAffectedFlights();
   }, []);
 
-  const fetchAffectedFlights = async () => {
+  const fetchAffectedFlights = async (retryCount = 0) => {
     try {
       setLoading(true);
       setError(null);
 
       // Try to fetch from database API
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://0.0.0.0:3001/api';
-      const fullUrl = `${baseUrl}/flights/affected`;
+      // Use the current window location to construct the API URL for Replit
+      const protocol = window.location.protocol;
+      const hostname = window.location.hostname;
+      
+      // For Replit, construct the API URL by changing the port from 5000 to 3001
+      let apiUrl;
+      if (hostname.includes('replit.dev')) {
+        // For Replit URLs, replace the port part
+        apiUrl = `${protocol}//${hostname.replace(/5000/, '3001')}/api`;
+      } else {
+        // Fallback for local development
+        apiUrl = 'http://0.0.0.0:3001/api';
+      }
+      
+      const fullUrl = `${apiUrl}/flights/affected`;
       
       console.log('Fetching from URL:', fullUrl);
-      console.log('Base URL from env:', import.meta.env.VITE_API_URL);
+      console.log('Current location:', window.location.href);
+      console.log('Retry count:', retryCount);
       
-      const response = await fetch(fullUrl);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      const response = await fetch(fullUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
       
       console.log('Response status:', response.status);
       console.log('Response ok:', response.ok);
@@ -81,7 +107,7 @@ export function DisruptionInput({ onSelectFlight }) {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Response error:', errorText);
-        throw new Error(`Failed to fetch flights from database: ${response.status} ${response.statusText}`);
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
       const flights = await response.json();
@@ -89,7 +115,15 @@ export function DisruptionInput({ onSelectFlight }) {
       setAffectedFlights(flights);
     } catch (err) {
       console.error("Error fetching flights:", err);
-      setError(`Failed to load flight data from database: ${err.message}. Using demo data.`);
+      
+      // Retry logic for network errors
+      if (retryCount < 2 && (err.name === 'AbortError' || err.message.includes('Failed to fetch'))) {
+        console.log(`Retrying in ${(retryCount + 1) * 2} seconds...`);
+        setTimeout(() => fetchAffectedFlights(retryCount + 1), (retryCount + 1) * 2000);
+        return;
+      }
+      
+      setError(`Failed to load flight data: ${err.message}. Using demo data.`);
 
       // Fallback to demo data if database is not available
       const demoFlights = [

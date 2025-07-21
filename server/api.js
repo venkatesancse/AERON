@@ -15,8 +15,12 @@ app.use(
       "https://c030c1b4-4afa-4473-9503-70afe9390bef-00-1z8g4lnqh0ais.pike.replit.dev",
       /^https:\/\/.*\.replit\.dev$/,
       /^https:\/\/.*\.pike\.replit\.dev$/,
+      // Allow any Replit domain pattern
+      /^https:\/\/[a-z0-9-]+-00-[a-z0-9]+\.pike\.replit\.dev$/,
     ],
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   }),
 );
 
@@ -41,6 +45,15 @@ pool.query("SELECT NOW()", (err, res) => {
 });
 
 // API Routes
+
+// Health check endpoint
+app.get("/api/health", (req, res) => {
+  res.json({ 
+    status: "ok", 
+    timestamp: new Date().toISOString(),
+    message: "API server is running"
+  });
+});
 
 // Get active disruptions with flight details
 app.get("/api/disruptions/active", async (req, res) => {
@@ -207,7 +220,7 @@ app.get("/api/flights/affected", async (req, res) => {
       disruptionType: row.disruption_type,
       severity: row.severity,
       impact: row.disruption_reason,
-      lastUpdate: this.getTimeAgo(row.last_update),
+      lastUpdate: getTimeAgo(row.last_update),
       priority: row.priority,
       connectionFlights: row.connection_flights || 0,
       vipPassengers: Math.floor(row.passengers * 0.02), // Estimate 2% VIP passengers
