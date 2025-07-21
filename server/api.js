@@ -13,14 +13,10 @@ app.use(
       "http://localhost:5000",
       "http://0.0.0.0:5000",
       "https://c030c1b4-4afa-4473-9503-70afe9390bef-00-1z8g4lnqh0ais.pike.replit.dev",
-      /^https:\/\/.*\.replit\.dev$/,
-      /^https:\/\/.*\.pike\.replit\.dev$/,
-      // Allow any Replit domain pattern
-      /^https:\/\/[a-z0-9-]+-00-[a-z0-9]+\.pike\.replit\.dev$/,
     ],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 
@@ -48,10 +44,10 @@ pool.query("SELECT NOW()", (err, res) => {
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
-  res.json({ 
-    status: "ok", 
+  res.json({
+    status: "ok",
     timestamp: new Date().toISOString(),
-    message: "API server is running"
+    message: "API server is running",
   });
 });
 
@@ -253,8 +249,8 @@ function getTimeAgo(date) {
 // Insert sample data endpoint
 app.post("/api/insert-sample-data", async (req, res) => {
   try {
-    console.log('Inserting sample disruption data...');
-    
+    console.log("Inserting sample disruption data...");
+
     // First, insert some sample flights if they don't exist
     const flightInsertQuery = `
       INSERT INTO flights (flight_number, origin_airport, destination_airport, scheduled_departure, scheduled_arrival, estimated_departure, estimated_arrival, status, passengers_booked, crew_count, gate, terminal, aircraft_id) 
@@ -266,9 +262,9 @@ app.post("/api/insert-sample-data", async (req, res) => {
         ('FZ181', 'DXB', 'COK', '2025-01-10 14:20:00', '2025-01-10 19:45:00', '2025-01-10 15:50:00', '2025-01-10 21:15:00', 'delayed', 175, 6, 'B08', '2', 5)
       ON CONFLICT (flight_number, scheduled_departure) DO NOTHING
     `;
-    
+
     await pool.query(flightInsertQuery);
-    
+
     // Then insert disruptions for these flights
     const disruptionInsertQuery = `
       INSERT INTO disruptions (flight_id, disruption_type_id, title, description, severity, status, passengers_affected, connecting_flights_affected, reported_at, updated_at) 
@@ -321,13 +317,13 @@ app.post("/api/insert-sample-data", async (req, res) => {
             AND d2.status IN ('active', 'resolving')
         )
     `;
-    
+
     const result = await pool.query(disruptionInsertQuery);
     console.log(`Inserted ${result.rowCount} sample disruptions`);
-    
-    res.json({ 
-      success: true, 
-      message: `Sample data inserted successfully. Added ${result.rowCount} disruptions.` 
+
+    res.json({
+      success: true,
+      message: `Sample data inserted successfully. Added ${result.rowCount} disruptions.`,
     });
   } catch (error) {
     console.error("Error inserting sample data:", error);
