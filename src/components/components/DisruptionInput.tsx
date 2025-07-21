@@ -61,55 +61,34 @@ export function DisruptionInput({ onSelectFlight }) {
     fetchAffectedFlights();
   }, []);
 
-  const fetchAffectedFlights = async (retryCount = 0) => {
-    setLoading(true);
-    setError(null);
-
+  const fetchAffectedFlights = async () => {
     try {
-      // Try to fetch from the API server
-      const response = await fetch('/api/flights/affected', {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-      });
+      setLoading(true);
+      setError(null);
 
+      // Try to fetch from database API
+      const isProduction = window.location.hostname.includes('replit.dev');
+      const baseUrl = isProduction 
+        ? `https://${window.location.hostname.replace('-00-', '-01-')}/api`
+        : import.meta.env.VITE_API_URL || 'http://0.0.0.0:3001/api';
+      const response = await fetch(`${baseUrl}/flights/affected`);
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error("Failed to fetch flights from database");
       }
 
       const flights = await response.json();
-      console.log('Flights received from database:', flights.length);
-
-      if (flights.length === 0) {
-        // No flights found, insert sample data
-        console.log('No flights found, inserting sample data...');
-        await insertSampleData();
-        // Retry fetching after inserting data
-        setTimeout(() => fetchAffectedFlights(), 1000);
-        return;
-      }
-
       setAffectedFlights(flights);
     } catch (err) {
       console.error("Error fetching flights:", err);
+      setError("Failed to load flight data from database. Using demo data.");
 
-      // Retry logic for network errors
-      if (retryCount < 2 && (err.name === 'AbortError' || err.message.includes('Failed to fetch'))) {
-        console.log(`Retrying in ${(retryCount + 1) * 2} seconds...`);
-        setTimeout(() => fetchAffectedFlights(retryCount + 1), (retryCount + 1) * 2000);
-        return;
-      }
-
-      setError(`Failed to load flight data: ${err.message}. Using demo data.`);
-
-      // Fallback to demo data if API is not available
+      // Fallback to demo data if database is not available
       const demoFlights = [
         {
           id: "FL_001",
           flightNumber: "FZ215",
-          route: "DXB → BOM",
+          origin: "DXB",
+          destination: "BOM",
           originCity: "Dubai",
           destinationCity: "Mumbai",
           scheduledDeparture: "2025-01-10T15:30:00",
@@ -131,7 +110,8 @@ export function DisruptionInput({ onSelectFlight }) {
         {
           id: "FL_002",
           flightNumber: "FZ203",
-          route: "DXB → DEL",
+          origin: "DXB",
+          destination: "DEL",
           originCity: "Dubai",
           destinationCity: "Delhi",
           scheduledDeparture: "2025-01-10T16:45:00",
@@ -153,7 +133,8 @@ export function DisruptionInput({ onSelectFlight }) {
         {
           id: "FL_003",
           flightNumber: "FZ235",
-          route: "KHI → DXB",
+          origin: "KHI",
+          destination: "DXB",
           originCity: "Karachi",
           destinationCity: "Dubai",
           scheduledDeparture: "2025-01-10T08:30:00",
@@ -175,7 +156,8 @@ export function DisruptionInput({ onSelectFlight }) {
         {
           id: "FL_004",
           flightNumber: "FZ147",
-          route: "IST → DXB",
+          origin: "IST",
+          destination: "DXB",
           originCity: "Istanbul",
           destinationCity: "Dubai",
           scheduledDeparture: "2025-01-10T21:15:00",
@@ -197,7 +179,8 @@ export function DisruptionInput({ onSelectFlight }) {
         {
           id: "FL_005",
           flightNumber: "FZ181",
-          route: "DXB → COK",
+          origin: "DXB",
+          destination: "COK",
           originCity: "Dubai",
           destinationCity: "Kochi",
           scheduledDeparture: "2025-01-10T14:20:00",
@@ -221,26 +204,6 @@ export function DisruptionInput({ onSelectFlight }) {
       setAffectedFlights(demoFlights);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const insertSampleData = async () => {
-    try {
-      // Insert sample disruptions and flights
-      const response = await fetch('/api/insert-sample-data', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        console.log('Sample data inserted successfully');
-      } else {
-        console.error('Failed to insert sample data');
-      }
-    } catch (err) {
-      console.error('Error inserting sample data:', err);
     }
   };
 
@@ -392,13 +355,8 @@ export function DisruptionInput({ onSelectFlight }) {
           >
             {affectedFlights.length} flights affected
           </Badge>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => fetchAffectedFlights()}
-            disabled={loading}
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          <Button variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
             Refresh Data
           </Button>
         </div>
@@ -676,32 +634,35 @@ export function DisruptionInput({ onSelectFlight }) {
                         />
                       </TableCell>
                       <TableCell>
+                        <div>
+                          <div className="font-medium">
+                            {flight.flightNumber}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {flight.aircraft}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-sm">
-                            {flight.flightNumber || flight.flight_number}
+                          <span className="font-medium">{flight.origin}</span>
+                          <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                          <span className="font-medium">
+                            {flight.destination}
                           </span>
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          {flight.aircraft || flight.aircraftType}
+                        <div className="text-sm text-muted-foreground">
+                          {flight.originCity} → {flight.destinationCity}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="font-medium">
-                          {flight.route || `${flight.originCity || flight.origin_city} → ${flight.destinationCity || flight.destination_city}`}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {formatDate(flight.scheduledDeparture || flight.scheduled_departure)} •{" "}
-                          {formatTime(flight.scheduledDeparture || flight.scheduled_departure)}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          className={getStatusColor(flight.currentStatus || flight.current_status)}
-                        >
-                          {flight.currentStatus || flight.current_status}
+                        <Badge className={getStatusColor(flight.currentStatus)}>
+                          {flight.currentStatus}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
                         {flight.delay && (
-                          <div className="text-xs text-muted-foreground mt-1">
+                          <div className="text-sm text-red-600">
                             +{flight.delay}m
                           </div>
                         )}
@@ -710,29 +671,12 @@ export function DisruptionInput({ onSelectFlight }) {
                         <Badge className={getPriorityColor(flight.priority)}>
                           {flight.priority}
                         </Badge>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {getDisruptionIcon(flight.disruptionType || flight.disruption_type)}{" "}
-                          <span className={getSeverityColor(flight.severity)}>
-                            {flight.severity} severity
-                          </span>
-                        </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Users className="h-4 w-4 text-muted-foreground" />
-                          <span>{flight.passengers}</span>
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {flight.connectionFlights || flight.connection_flights} connections
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="max-w-32">
-                          <div className="font-medium text-sm truncate">
-                            {flight.impact}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {flight.lastUpdate || flight.last_update}
+                        <div>
+                          <div className="font-medium">{flight.passengers}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {flight.connectionFlights} connections
                           </div>
                         </div>
                       </TableCell>
