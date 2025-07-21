@@ -201,59 +201,6 @@ FROM daily_metrics dm
 FULL OUTER JOIN disruption_metrics drm ON dm.flight_date = drm.disruption_date
 ORDER BY metric_date DESC;
 
--- Active disruptions with complete flight details for affected flights display
-CREATE OR REPLACE VIEW active_disruptions_detail AS
-SELECT 
-    f.id,
-    f.flight_number,
-    f.origin_airport || ' → ' || f.destination_airport as route,
-    orig.name as origin_city,
-    dest.name as destination_city,
-    f.scheduled_departure,
-    f.scheduled_arrival,
-    f.estimated_departure,
-    f.estimated_arrival,
-    f.status as current_status,
-    f.passengers_booked as passengers,
-    f.crew_count as crew,
-    f.gate,
-    f.terminal,
-    a.registration as aircraft,
-    a.aircraft_type,
-    CASE 
-        WHEN f.estimated_departure IS NOT NULL AND f.scheduled_departure IS NOT NULL 
-        THEN EXTRACT(EPOCH FROM (f.estimated_departure - f.scheduled_departure))/60 
-        ELSE 0 
-    END as delay,
-    d.severity,
-    d.title as disruption_reason,
-    dt.category as disruption_type,
-    d.status as disruption_status,
-    d.passengers_affected,
-    d.connecting_flights_affected as connection_flights,
-    CASE 
-        WHEN d.severity = 'high' THEN 'Critical'
-        WHEN d.severity = 'medium' THEN 'High'
-        ELSE 'Medium'
-    END as priority,
-    CASE 
-        WHEN d.updated_at > NOW() - INTERVAL '5 minutes' THEN EXTRACT(EPOCH FROM (NOW() - d.updated_at))/60 || ' mins ago'
-        WHEN d.updated_at > NOW() - INTERVAL '1 hour' THEN EXTRACT(EPOCH FROM (NOW() - d.updated_at))/60 || ' mins ago'
-        ELSE EXTRACT(EPOCH FROM (NOW() - d.updated_at))/3600 || ' hours ago'
-    END as last_update,
-    d.reported_at,
-    d.updated_at
-FROM flights f
-LEFT JOIN airports orig ON f.origin_airport = orig.iata_code
-LEFT JOIN airports dest ON f.destination_airport = dest.iata_code
-LEFT JOIN aircraft a ON f.aircraft_id = a.id
-LEFT JOIN disruptions d ON f.id = d.flight_id
-LEFT JOIN disruption_types dt ON d.disruption_type_id = dt.id
-WHERE d.status IN ('active', 'resolving')
-    AND f.scheduled_departure >= CURRENT_DATE - INTERVAL '1 day'
-    AND f.scheduled_departure <= CURRENT_DATE + INTERVAL '2 days'
-ORDER BY d.severity DESC, f.scheduled_departure ASC;
-
 -- Aircraft utilization view
 CREATE OR REPLACE VIEW aircraft_utilization AS
 SELECT 
