@@ -67,7 +67,7 @@ export function DisruptionInput({ onSelectFlight }) {
       setError(null);
 
       // Try to fetch from database API
-      const baseUrl = process.env.VITE_API_URL || 'http://0.0.0.0:3001/api';
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://0.0.0.0:3001/api';
       const response = await fetch(`${baseUrl}/flights/affected`);
       if (!response.ok) {
         throw new Error("Failed to fetch flights from database");
