@@ -66,68 +66,105 @@ export function DisruptionInput({ onSelectFlight }) {
       setLoading(true);
       setError(null);
 
-      // Try to fetch from database API
-      // Use the current window location to construct the API URL for Replit
+      // Construct the API URL for Replit environment
       const protocol = window.location.protocol;
       const hostname = window.location.hostname;
       
-      // For Replit environment, construct the correct API URL
       let apiUrl;
       if (hostname.includes('replit.dev')) {
-        // For Replit URLs like: abc123-5000-def456.pike.replit.dev
-        // We need to change to: abc123-3001-def456.pike.replit.dev
-        const newHostname = hostname.replace('-5000-', '-3001-');
+        // For Replit URLs, we need to use the correct port
+        // Current format: something-5000-id.pike.replit.dev
+        // Target format: something-3001-id.pike.replit.dev
+        const parts = hostname.split('.');
+        const mainPart = parts[0]; // e.g., "c030c1b4-4afa-4473-9503-70afe9390bef-00-1z8g4lnqh0ais"
+        
+        // Replace port in the hostname
+        let newHostname;
+        if (mainPart.includes('-5000-')) {
+          newHostname = hostname.replace('-5000-', '-3001-');
+        } else {
+          // Fallback: try to construct the API URL by replacing the first part
+          const domainParts = hostname.split('-');
+          if (domainParts.length >= 3) {
+            domainParts[domainParts.length - 3] = '3001'; // Replace port part
+            newHostname = domainParts.join('-');
+          } else {
+            // Last resort: try direct port replacement
+            newHostname = hostname.replace('5000', '3001');
+          }
+        }
+        
         apiUrl = `${protocol}//${newHostname}/api`;
       } else if (hostname === 'localhost' || hostname.startsWith('127.0.0.1')) {
         // Local development
         apiUrl = 'http://localhost:3001/api';
       } else {
-        // Default fallback for other environments
+        // Default fallback
         apiUrl = 'http://0.0.0.0:3001/api';
       }
       
-      const fullUrl = `${apiUrl}/flights/affected`;
+      // First, let's try the direct approach using the same domain with port 3001
+      const directApiUrl = `${protocol}//${hostname}:3001/api`;
       
-      console.log('Fetching affected flights from:', fullUrl);
+      console.log('Attempting API URLs:');
+      console.log('1. Constructed URL:', apiUrl);
+      console.log('2. Direct URL:', directApiUrl);
       console.log('Current location:', window.location.href);
       console.log('Retry attempt:', retryCount);
       
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      // Try both URLs
+      const urlsToTry = [apiUrl, directApiUrl];
+      let lastError = null;
       
-      const response = await fetch(fullUrl, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        signal: controller.signal,
-      });
+      for (const testUrl of urlsToTry) {
+        try {
+          console.log(`Trying: ${testUrl}/flights/affected`);
+          
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
       
-      clearTimeout(timeoutId);
-      
-      console.log('Response status:', response.status);
-      console.log('Response ok:', response.ok);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Response error:', errorText);
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
+      const response = await fetch(`${testUrl}/flights/affected`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            signal: controller.signal,
+          });
+          
+          clearTimeout(timeoutId);
+          
+          console.log(`Response from ${testUrl}:`, response.status, response.ok);
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Response error:', errorText);
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
 
-      // Check if response is actually JSON
-      const contentType = response.headers.get('content-type');
-      console.log('Response content-type:', contentType);
-      
-      if (!contentType || !contentType.includes('application/json')) {
-        const responseText = await response.text();
-        console.error('Non-JSON response received:', responseText.substring(0, 200));
-        throw new Error('Server returned HTML instead of JSON - API server may not be running');
-      }
+          // Check if response is actually JSON
+          const contentType = response.headers.get('content-type');
+          console.log('Response content-type:', contentType);
+          
+          if (!contentType || !contentType.includes('application/json')) {
+            const responseText = await response.text();
+            console.error('Non-JSON response received:', responseText.substring(0, 200));
+            throw new Error('Server returned HTML instead of JSON - API server may not be running');
+          }
 
-      const flights = await response.json();
-      console.log('Flights received:', flights.length);
-      setAffectedFlights(flights);
+          const flights = await response.json();
+          console.log('Flights received:', flights.length, 'from', testUrl);
+          setAffectedFlights(flights);
+          return; // Success! Exit the function
+        } catch (err) {
+          console.error(`Failed to fetch from ${testUrl}:`, err.message);
+          lastError = err;
+          continue; // Try the next URL
+        }
+      }
+      
+      // If we get here, all URLs failed
+      throw lastError || new Error('All API endpoints failed');
     } catch (err) {
       console.error("Error fetching flights:", err);
       
