@@ -5,30 +5,68 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
 import { Input } from './ui/input'
+import { Label } from './ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table'
-import { Alert, AlertDescription } from './ui/alert'
 import { Checkbox } from './ui/checkbox'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
+import { Alert, AlertDescription } from './ui/alert'
+import { Progress } from './ui/progress'
+import { Separator } from './ui/separator'
 import { 
   AlertTriangle, 
   Plane, 
   Users, 
   Clock, 
   MapPin, 
-  Filter, 
+  DollarSign,
+  Filter,
   Search,
-  ArrowRight,
-  RefreshCw,
   Eye,
+  RefreshCw,
+  ArrowRight,
+  Info,
+  Star,
   Zap,
-  TrendingUp,
-  CalendarDays,
-  Timer
+  Activity
 } from 'lucide-react'
+import { dbService } from '../../services/database'
 
-// Mock flight data affected by disruptions
-const affectedFlights = [
+export function DisruptionInput({ onSelectFlight }) {
+  const [selectedFlights, setSelectedFlights] = useState([])
+  const [affectedFlights, setAffectedFlights] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [filters, setFilters] = useState({
+    status: 'all',
+    priority: 'all',
+    origin: 'all',
+    search: ''
+  })
+
+  // Fetch affected flights from database
+  useEffect(() => {
+    fetchAffectedFlights()
+  }, [])
+
+  const fetchAffectedFlights = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      // Try to fetch from database API
+      const response = await fetch('http://localhost:3001/api/flights/affected')
+      if (!response.ok) {
+        throw new Error('Failed to fetch flights from database')
+      }
+
+      const flights = await response.json()
+      setAffectedFlights(flights)
+    } catch (err) {
+      console.error('Error fetching flights:', err)
+      setError('Failed to load flight data from database. Using demo data.')
+
+      // Fallback to demo data if database is not available
+      const demoFlights = [
   {
     id: 'FL_001',
     flightNumber: 'FZ215',
@@ -146,16 +184,11 @@ const affectedFlights = [
   }
 ]
 
-export function DisruptionInput({ disruption, onSelectFlight }) {
-  const [selectedFlights, setSelectedFlights] = useState([])
-  const [filters, setFilters] = useState({
-    status: 'all',
-    priority: 'all',
-    origin: 'all',
-    search: ''
-  })
-  const [sortBy, setSortBy] = useState('priority')
-  const [view, setView] = useState('table')
+      setAffectedFlights(demoFlights)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -221,21 +254,10 @@ export function DisruptionInput({ disruption, onSelectFlight }) {
     return true
   })
 
-  // Sort flights
+  // Sort flights by priority
   const sortedFlights = [...filteredFlights].sort((a, b) => {
-    switch (sortBy) {
-      case 'priority':
-        const priorityOrder = { 'Critical': 4, 'High': 3, 'Medium': 2, 'Low': 1 }
-        return priorityOrder[b.priority] - priorityOrder[a.priority]
-      case 'departure':
-        return new Date(a.scheduledDeparture) - new Date(b.scheduledDeparture)
-      case 'passengers':
-        return b.passengers - a.passengers
-      case 'delay':
-        return (b.delay || 0) - (a.delay || 0)
-      default:
-        return 0
-    }
+    const priorityOrder = { 'Critical': 4, 'High': 3, 'Medium': 2, 'Low': 1 }
+    return priorityOrder[b.priority] - priorityOrder[a.priority]
   })
 
   const handleFlightSelection = (flightId, checked) => {
@@ -254,19 +276,11 @@ export function DisruptionInput({ disruption, onSelectFlight }) {
     }
   }
 
-  const handleProceedToRecovery = () => {
-    const selectedFlightData = sortedFlights.filter(flight => selectedFlights.includes(flight.id))
-    if (selectedFlightData.length > 0) {
-      onSelectFlight(selectedFlightData)
-    }
-  }
-
   const getTotalImpact = () => {
-    const selectedFlightData = sortedFlights.filter(flight => selectedFlights.includes(flight.id))
     return {
-      flights: selectedFlightData.length,
-      passengers: selectedFlightData.reduce((sum, flight) => sum + flight.passengers, 0),
-      connections: selectedFlightData.reduce((sum, flight) => sum + flight.connectionFlights, 0)
+      flights: selectedFlights.length,
+      passengers: affectedFlights.reduce((sum, flight) => sum + flight.passengers, 0),
+      connections: affectedFlights.reduce((sum, flight) => sum + flight.connectionFlights, 0)
     }
   }
 
@@ -282,7 +296,7 @@ export function DisruptionInput({ disruption, onSelectFlight }) {
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-            {sortedFlights.length} flights affected
+            {affectedFlights.length} flights affected
           </Badge>
           <Button variant="outline" size="sm">
             <RefreshCw className="h-4 w-4 mr-2" />
@@ -292,12 +306,11 @@ export function DisruptionInput({ disruption, onSelectFlight }) {
       </div>
 
       {/* Context Alert */}
-      {disruption && (
-        <Alert className="border-orange-200 bg-orange-50">
-          <AlertTriangle className="h-4 w-4 text-orange-600" />
-          <AlertDescription className="text-orange-800">
-            <strong>Disruption Context:</strong> {disruption.title} at {disruption.airport?.toUpperCase()} - 
-            {disruption.affectedFlights} flights impacted. Last updated {disruption.lastUpdate}.
+      {error && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            {error}
           </AlertDescription>
         </Alert>
       )}
@@ -311,13 +324,13 @@ export function DisruptionInput({ disruption, onSelectFlight }) {
               <div>
                 <p className="text-sm text-muted-foreground">Critical Flights</p>
                 <p className="text-lg font-semibold text-red-600">
-                  {sortedFlights.filter(f => f.priority === 'Critical').length}
+                  {affectedFlights.filter(f => f.priority === 'Critical').length}
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -325,13 +338,13 @@ export function DisruptionInput({ disruption, onSelectFlight }) {
               <div>
                 <p className="text-sm text-muted-foreground">Total Passengers</p>
                 <p className="text-lg font-semibold text-blue-600">
-                  {sortedFlights.reduce((sum, f) => sum + f.passengers, 0).toLocaleString()}
+                  {affectedFlights.reduce((sum, f) => sum + f.passengers, 0).toLocaleString()}
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -339,13 +352,13 @@ export function DisruptionInput({ disruption, onSelectFlight }) {
               <div>
                 <p className="text-sm text-muted-foreground">Connections</p>
                 <p className="text-lg font-semibold text-green-600">
-                  {sortedFlights.reduce((sum, f) => sum + f.connectionFlights, 0)}
+                  {affectedFlights.reduce((sum, f) => sum + f.connectionFlights, 0)}
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -353,8 +366,8 @@ export function DisruptionInput({ disruption, onSelectFlight }) {
               <div>
                 <p className="text-sm text-muted-foreground">Avg Delay</p>
                 <p className="text-lg font-semibold text-purple-600">
-                  {Math.round(sortedFlights.filter(f => f.delay).reduce((sum, f) => sum + f.delay, 0) / 
-                    sortedFlights.filter(f => f.delay).length || 0)}m
+                  {Math.round(affectedFlights.filter(f => f.delay).reduce((sum, f) => sum + f.delay, 0) / 
+                    affectedFlights.filter(f => f.delay).length || 0)}m
                 </p>
               </div>
             </div>
@@ -384,7 +397,7 @@ export function DisruptionInput({ disruption, onSelectFlight }) {
                 />
               </div>
             </div>
-            
+
             <div>
               <label className="text-sm font-medium mb-2 block">Status</label>
               <Select value={filters.status} onValueChange={(value) => setFilters({...filters, status: value})}>
@@ -399,7 +412,7 @@ export function DisruptionInput({ disruption, onSelectFlight }) {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div>
               <label className="text-sm font-medium mb-2 block">Priority</label>
               <Select value={filters.priority} onValueChange={(value) => setFilters({...filters, priority: value})}>
@@ -415,7 +428,7 @@ export function DisruptionInput({ disruption, onSelectFlight }) {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div>
               <label className="text-sm font-medium mb-2 block">Origin</label>
               <Select value={filters.origin} onValueChange={(value) => setFilters({...filters, origin: value})}>
@@ -430,12 +443,12 @@ export function DisruptionInput({ disruption, onSelectFlight }) {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div>
               <label className="text-sm font-medium mb-2 block">Sort By</label>
-              <Select value={sortBy} onValueChange={setSortBy}>
+              <Select value={filters.sortBy} onValueChange={(value) => setFilters({...filters, sortBy: value})}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="priority">Priority</SelectItem>
@@ -471,16 +484,38 @@ export function DisruptionInput({ disruption, onSelectFlight }) {
                   <TableHead className="w-12">Select</TableHead>
                   <TableHead>Flight</TableHead>
                   <TableHead>Route</TableHead>
-                  <TableHead>Departure</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Delay</TableHead>
                   <TableHead>Priority</TableHead>
-                  <TableHead>Passengers</TableHead>
                   <TableHead>Impact</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedFlights.map((flight) => (
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-8">
+                      <div className="flex items-center justify-center gap-2">
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                        Loading flight data from database...
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : sortedFlights.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-8">
+                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                        <Plane className="h-8 w-8" />
+                        <p>No affected flights found</p>
+                        <Button variant="outline" size="sm" onClick={fetchAffectedFlights}>
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Retry Loading
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  sortedFlights.map((flight) => (
                   <TableRow key={flight.id} className={selectedFlights.includes(flight.id) ? 'bg-blue-50' : ''}>
                     <TableCell>
                       <Checkbox 
@@ -505,17 +540,13 @@ export function DisruptionInput({ disruption, onSelectFlight }) {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div>
-                        <div className="font-medium">{formatTime(flight.scheduledDeparture)}</div>
-                        <div className="text-sm text-muted-foreground">{formatDate(flight.scheduledDeparture)}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
                       <Badge className={getStatusColor(flight.currentStatus)}>
                         {flight.currentStatus}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
                       {flight.delay && (
-                        <div className="text-sm text-red-600 mt-1">+{flight.delay}m</div>
+                        <div className="text-sm text-red-600">+{flight.delay}m</div>
                       )}
                     </TableCell>
                     <TableCell>
@@ -532,19 +563,6 @@ export function DisruptionInput({ disruption, onSelectFlight }) {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">{getDisruptionIcon(flight.disruptionType)}</span>
-                        <div>
-                          <div className={`text-sm font-medium ${getSeverityColor(flight.severity)}`}>
-                            {flight.severity} severity
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {flight.lastUpdate}
-                          </div>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
                       <Button 
                         variant="outline" 
                         size="sm"
@@ -555,7 +573,8 @@ export function DisruptionInput({ disruption, onSelectFlight }) {
                       </Button>
                     </TableCell>
                   </TableRow>
-                ))}
+                ))
+                )}
               </TableBody>
             </Table>
           </div>
@@ -572,7 +591,7 @@ export function DisruptionInput({ disruption, onSelectFlight }) {
                   <Zap className="h-5 w-5 text-blue-600" />
                   <h4 className="font-medium text-blue-800">Recovery Planning Summary</h4>
                 </div>
-                
+
                 <div className="flex items-center gap-4 text-sm">
                   <div>
                     <span className="text-blue-600 font-medium">{impact.flights}</span>
@@ -588,8 +607,8 @@ export function DisruptionInput({ disruption, onSelectFlight }) {
                   </div>
                 </div>
               </div>
-              
-              <Button onClick={handleProceedToRecovery} className="bg-blue-600 hover:bg-blue-700">
+
+              <Button className="bg-blue-600 hover:bg-blue-700">
                 <ArrowRight className="h-4 w-4 mr-2" />
                 Generate Recovery Options
               </Button>
