@@ -74,17 +74,50 @@ export function DisruptionInput({ onSelectFlight }) {
       // For Replit, construct the API URL by changing the port from 5000 to 3001
       let apiUrl;
       if (hostname.includes('replit.dev')) {
-        // For Replit URLs, replace the port part
-        apiUrl = `${protocol}//${hostname.replace(/5000/, '3001')}/api`;
+        // For Replit URLs, construct the API URL properly
+        const parts = hostname.split('-');
+        if (parts.length >= 3) {
+          // Replace the port in the hostname (e.g., 5000-00-abc -> 3001-00-abc)
+          const newHostname = hostname.replace('-5000-', '-3001-');
+          apiUrl = `${protocol}//${newHostname}/api`;
+        } else {
+          // Fallback - try direct port replacement
+          apiUrl = `${protocol}//${hostname.replace(/5000/, '3001')}/api`;
+        }
       } else {
         // Fallback for local development
         apiUrl = 'http://0.0.0.0:3001/api';
+      }
+      
+      // First, try a health check
+      const healthUrl = `${apiUrl}/health`;
+      console.log('Testing API health at:', healthUrl);
+      
+      try {
+        const healthResponse = await fetch(healthUrl, { 
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (!healthResponse.ok) {
+          console.error('Health check failed:', healthResponse.status);
+          throw new Error(`API server not responding (health check failed: ${healthResponse.status})`);
+        }
+        
+        const healthData = await healthResponse.json();
+        console.log('Health check successful:', healthData);
+      } catch (healthError) {
+        console.error('Health check error:', healthError);
+        throw new Error(`API server unreachable: ${healthError.message}`);
       }
       
       const fullUrl = `${apiUrl}/flights/affected`;
       
       console.log('Fetching from URL:', fullUrl);
       console.log('Current location:', window.location.href);
+      console.log('Constructed hostname:', hostname);
+      console.log('Protocol:', protocol);
+      console.log('API URL:', apiUrl);
       console.log('Retry count:', retryCount);
       
       const controller = new AbortController();
@@ -108,6 +141,16 @@ export function DisruptionInput({ onSelectFlight }) {
         const errorText = await response.text();
         console.error('Response error:', errorText);
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      // Check if response is actually JSON
+      const contentType = response.headers.get('content-type');
+      console.log('Response content-type:', contentType);
+      
+      if (!contentType || !contentType.includes('application/json')) {
+        const responseText = await response.text();
+        console.error('Non-JSON response received:', responseText.substring(0, 200));
+        throw new Error('Server returned HTML instead of JSON - API server may not be running');
       }
 
       const flights = await response.json();
