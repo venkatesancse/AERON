@@ -13,6 +13,8 @@ app.use(
       "http://localhost:5000",
       "http://0.0.0.0:5000",
       "https://c030c1b4-4afa-4473-9503-70afe9390bef-00-1z8g4lnqh0ais.pike.replit.dev",
+      /^https:\/\/.*\.replit\.dev$/,
+      /^https:\/\/.*\.pike\.replit\.dev$/,
     ],
     credentials: true,
   }),

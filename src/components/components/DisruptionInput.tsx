@@ -68,16 +68,28 @@ export function DisruptionInput({ onSelectFlight }) {
 
       // Try to fetch from database API
       const baseUrl = import.meta.env.VITE_API_URL || 'http://0.0.0.0:3001/api';
-      const response = await fetch(`${baseUrl}/flights/affected`);
+      const fullUrl = `${baseUrl}/flights/affected`;
+      
+      console.log('Fetching from URL:', fullUrl);
+      console.log('Base URL from env:', import.meta.env.VITE_API_URL);
+      
+      const response = await fetch(fullUrl);
+      
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+      
       if (!response.ok) {
-        throw new Error("Failed to fetch flights from database");
+        const errorText = await response.text();
+        console.error('Response error:', errorText);
+        throw new Error(`Failed to fetch flights from database: ${response.status} ${response.statusText}`);
       }
 
       const flights = await response.json();
+      console.log('Flights received:', flights.length);
       setAffectedFlights(flights);
     } catch (err) {
       console.error("Error fetching flights:", err);
-      setError("Failed to load flight data from database. Using demo data.");
+      setError(`Failed to load flight data from database: ${err.message}. Using demo data.`);
 
       // Fallback to demo data if database is not available
       const demoFlights = [
