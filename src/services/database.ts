@@ -5,7 +5,7 @@ export class DatabaseService {
 
   constructor() {
     // In production, this would be your deployed API endpoint
-    this.baseUrl = process.env.VITE_API_URL || 'http://localhost:3001/api';
+    this.baseUrl = process.env.VITE_API_URL || 'http://0.0.0.0:3001/api';
   }
 
   async getActiveDisruptions() {
