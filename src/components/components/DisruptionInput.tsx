@@ -71,54 +71,26 @@ export function DisruptionInput({ onSelectFlight }) {
       const protocol = window.location.protocol;
       const hostname = window.location.hostname;
       
-      // For Replit, construct the API URL by changing the port from 5000 to 3001
+      // For Replit environment, construct the correct API URL
       let apiUrl;
       if (hostname.includes('replit.dev')) {
-        // For Replit URLs, construct the API URL properly
-        const parts = hostname.split('-');
-        if (parts.length >= 3) {
-          // Replace the port in the hostname (e.g., 5000-00-abc -> 3001-00-abc)
-          const newHostname = hostname.replace('-5000-', '-3001-');
-          apiUrl = `${protocol}//${newHostname}/api`;
-        } else {
-          // Fallback - try direct port replacement
-          apiUrl = `${protocol}//${hostname.replace(/5000/, '3001')}/api`;
-        }
+        // For Replit URLs like: abc123-5000-def456.pike.replit.dev
+        // We need to change to: abc123-3001-def456.pike.replit.dev
+        const newHostname = hostname.replace('-5000-', '-3001-');
+        apiUrl = `${protocol}//${newHostname}/api`;
+      } else if (hostname === 'localhost' || hostname.startsWith('127.0.0.1')) {
+        // Local development
+        apiUrl = 'http://localhost:3001/api';
       } else {
-        // Fallback for local development
+        // Default fallback for other environments
         apiUrl = 'http://0.0.0.0:3001/api';
-      }
-      
-      // First, try a health check
-      const healthUrl = `${apiUrl}/health`;
-      console.log('Testing API health at:', healthUrl);
-      
-      try {
-        const healthResponse = await fetch(healthUrl, { 
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        
-        if (!healthResponse.ok) {
-          console.error('Health check failed:', healthResponse.status);
-          throw new Error(`API server not responding (health check failed: ${healthResponse.status})`);
-        }
-        
-        const healthData = await healthResponse.json();
-        console.log('Health check successful:', healthData);
-      } catch (healthError) {
-        console.error('Health check error:', healthError);
-        throw new Error(`API server unreachable: ${healthError.message}`);
       }
       
       const fullUrl = `${apiUrl}/flights/affected`;
       
-      console.log('Fetching from URL:', fullUrl);
+      console.log('Fetching affected flights from:', fullUrl);
       console.log('Current location:', window.location.href);
-      console.log('Constructed hostname:', hostname);
-      console.log('Protocol:', protocol);
-      console.log('API URL:', apiUrl);
-      console.log('Retry count:', retryCount);
+      console.log('Retry attempt:', retryCount);
       
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
@@ -441,8 +413,13 @@ export function DisruptionInput({ onSelectFlight }) {
           >
             {affectedFlights.length} flights affected
           </Badge>
-          <Button variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => fetchAffectedFlights()}
+            disabled={loading}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh Data
           </Button>
         </div>
@@ -725,20 +702,22 @@ export function DisruptionInput({ onSelectFlight }) {
                             {flight.flightNumber}
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            {flight.aircraft}
+                            {flight.aircraft || flight.aircraftType}
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">{flight.origin}</span>
+                          <span className="font-medium">{flight.origin || flight.route?.split(' → ')[0]}</span>
                           <ArrowRight className="h-3 w-3 text-muted-foreground" />
                           <span className="font-medium">
-                            {flight.destination}
+                            {flight.destination || flight.route?.split(' → ')[1]}
                           </span>
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {flight.originCity} → {flight.destinationCity}
+                          {flight.originCity && flight.destinationCity ? 
+                            `${flight.originCity} → ${flight.destinationCity}` : 
+                            flight.route}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -762,7 +741,7 @@ export function DisruptionInput({ onSelectFlight }) {
                         <div>
                           <div className="font-medium">{flight.passengers}</div>
                           <div className="text-sm text-muted-foreground">
-                            {flight.connectionFlights} connections
+                            {flight.connectionFlights || flight.connection_flights || 0} connections
                           </div>
                         </div>
                       </TableCell>
