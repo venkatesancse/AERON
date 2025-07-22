@@ -145,13 +145,15 @@ app.get("/api/recovery/performance", async (req, res) => {
 // Get flights with disruptions (for affected flights list)
 app.get("/api/flights/affected", async (req, res) => {
   try {
+    console.log("Fetching affected flights...");
+    
     const query = `
       SELECT 
         f.id,
         f.flight_number,
         f.origin_airport || ' → ' || f.destination_airport as route,
-        orig.name as origin_city,
-        dest.name as destination_city,
+        orig.city as origin_city,
+        dest.city as destination_city,
         f.scheduled_departure,
         f.scheduled_arrival,
         f.estimated_departure,
@@ -187,12 +189,15 @@ app.get("/api/flights/affected", async (req, res) => {
       LEFT JOIN aircraft a ON f.aircraft_id = a.id
       LEFT JOIN disruptions d ON f.id = d.flight_id
       LEFT JOIN disruption_types dt ON d.disruption_type_id = dt.id
-      WHERE d.status IN ('active', 'resolving')
+      WHERE d.id IS NOT NULL 
+        AND d.status IN ('active', 'resolving')
         AND f.scheduled_departure >= CURRENT_DATE - INTERVAL '1 day'
         AND f.scheduled_departure <= CURRENT_DATE + INTERVAL '2 days'
       ORDER BY d.severity DESC, f.scheduled_departure ASC
     `;
+    
     const result = await pool.query(query);
+    console.log(`Found ${result.rows.length} affected flights`);
 
     // Transform the data to match the frontend format
     const transformedData = result.rows.map((row) => ({
@@ -219,13 +224,15 @@ app.get("/api/flights/affected", async (req, res) => {
       lastUpdate: getTimeAgo(row.last_update),
       priority: row.priority,
       connectionFlights: row.connection_flights || 0,
-      vipPassengers: Math.floor(row.passengers * 0.02), // Estimate 2% VIP passengers
+      vipPassengers: Math.floor((row.passengers || 0) * 0.02), // Estimate 2% VIP passengers
     }));
 
+    console.log(`Returning ${transformedData.length} transformed flights`);
     res.json(transformedData);
   } catch (error) {
     console.error("Error fetching affected flights:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Error details:", error.stack);
+    res.status(500).json({ error: "Internal server error", details: error.message });
   }
 });
 
