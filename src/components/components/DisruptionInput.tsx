@@ -68,10 +68,19 @@ export function DisruptionInput({ onSelectFlight }) {
 
       // Try to fetch from database API
       const isProduction = window.location.hostname.includes('replit.dev');
-      const baseUrl = isProduction 
-        ? `https://${window.location.hostname.replace('-00-', '-01-')}/api`
-        : import.meta.env.VITE_API_URL;
-      const response = await fetch(`${baseUrl}/flights/affected`);
+      let baseUrl;
+      
+      if (isProduction) {
+        // In production, the API server runs on port 3001
+        const hostname = window.location.hostname;
+        const port = ':3001';
+        baseUrl = `https://${hostname}${port}`;
+      } else {
+        // In development, use environment variable or fallback to localhost:3001
+        baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      }
+      
+      const response = await fetch(`${baseUrl}/api/flights/affected`);
       if (!response.ok) {
         throw new Error("Failed to fetch flights from database");
       }

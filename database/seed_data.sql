@@ -1,4 +1,3 @@
-
 -- AERON Flight Disruption Management - Comprehensive Sample Data
 -- Populating all tables with realistic sample data
 
@@ -201,9 +200,9 @@ INSERT INTO kpi_metrics (metric_name, metric_category, value, target_value, unit
 
 -- Insert Decision Logs with all fields populated
 INSERT INTO decision_logs (disruption_id, recovery_plan_id, decision_type, decision_maker, recommended_option_id, selected_option_id, decision_rationale, override_reason, confidence_score, decision_time_seconds, outcome, success_metrics, lessons_learned) VALUES
-((SELECT id FROM disruptions WHERE disruption_code = 'DISR_001'), (SELECT id FROM recovery_plans WHERE plan_code = 'REC_001'), 'recovery_selection', 'ops_manager_002', (SELECT id FROM recovery_options WHERE title = 'Wait for Weather Clearance'), (SELECT id FROM recovery_options WHERE title = 'Wait for Weather Clearance'), 'Weather forecast shows improvement within 3 hours, cost-effective solution', NULL, 85.5, 45, 'in_progress', NULL, NULL),
-((SELECT id FROM disruptions WHERE disruption_code = 'DISR_002'), (SELECT id FROM recovery_plans WHERE plan_code = 'REC_002'), 'recovery_selection', 'ops_director_003', (SELECT id FROM recovery_options WHERE title = 'Cancel and Rebook Next Day'), (SELECT id FROM recovery_options WHERE title = 'Cancel and Rebook Next Day'), 'Fog conditions expected to persist through morning, passenger safety priority', NULL, 92.0, 120, 'approved', NULL, NULL),
-((SELECT id FROM disruptions WHERE disruption_code = 'DISR_003'), (SELECT id FROM recovery_plans WHERE plan_code = 'REC_003'), 'recovery_selection', 'ai', (SELECT id FROM recovery_options WHERE title = 'Wait for Weather Clearance'), (SELECT id FROM recovery_options WHERE title = 'Wait for Weather Clearance'), 'AI recommendation based on historical ATC patterns and slot availability', NULL, 78.2, 5, 'successful', '{"time_saved": 90, "cost_efficiency": 92}', 'AI prediction accuracy was high for ATC delay resolution');
+('REC_001', (SELECT id FROM disruptions WHERE disruption_code = 'DISR_001'), 'recovery_selection', 'ops_manager_002', (SELECT id FROM recovery_options WHERE title = 'Wait for Weather Clearance'), (SELECT id FROM recovery_options WHERE title = 'Wait for Weather Clearance'), 'Weather forecast shows improvement within 3 hours, cost-effective solution', NULL, 85.5, 45, 'in_progress', NULL, NULL),
+('REC_002', (SELECT id FROM disruptions WHERE disruption_code = 'DISR_002'), 'recovery_selection', 'ops_director_003', (SELECT id FROM recovery_options WHERE title = 'Cancel and Rebook Next Day'), (SELECT id FROM recovery_options WHERE title = 'Cancel and Rebook Next Day'), 'Fog conditions expected to persist through morning, passenger safety priority', NULL, 92.0, 120, 'approved', NULL, NULL),
+('REC_003', (SELECT id FROM disruptions WHERE disruption_code = 'DISR_003'), 'recovery_selection', 'ai', (SELECT id FROM recovery_options WHERE title = 'Wait for Weather Clearance'), (SELECT id FROM recovery_options WHERE title = 'Wait for Weather Clearance'), 'AI recommendation based on historical ATC patterns and slot availability', NULL, 78.2, 5, 'successful', '{"time_saved": 90, "cost_efficiency": 92}', 'AI prediction accuracy was high for ATC delay resolution');
 
 -- Insert Audit Logs with all fields populated
 INSERT INTO audit_logs (table_name, record_id, action, old_values, new_values, changed_by, changed_at, session_id, ip_address, user_agent, reason) VALUES
@@ -257,5 +256,74 @@ INSERT INTO passengers (pnr, title, first_name, last_name, email, phone, date_of
 INSERT INTO flight_passengers (flight_id, passenger_id, seat_number, travel_class, ticket_type, fare_amount, currency, booking_date, booking_channel, status, priority_score, connection_flight_id, connection_risk) VALUES
 ((SELECT id FROM flights WHERE flight_number = 'EK524'), (SELECT id FROM passengers WHERE pnr = 'XYZ123'), '1B', 'first', 'ticketed', 5200.00, 'USD', '2024-09-15 14:30:00', 'corporate', 'boarded', 98, NULL, 'none'),
 ((SELECT id FROM flights WHERE flight_number = 'TK1010'), (SELECT id FROM passengers WHERE pnr = 'UVW456'), '5F', 'business', 'ticketed', 1950.00, 'USD', '2024-12-05 11:20:00', 'website', 'checked_in', 85, NULL, 'none');
+
+-- Insert test flights with disruptions
+INSERT INTO flights (id, flight_number, origin_airport, destination_airport, scheduled_departure, scheduled_arrival, estimated_departure, estimated_arrival, status, aircraft_id, passengers_booked, crew_count, gate, terminal) VALUES
+('FL-001', 'FZ101', 'DXB', 'LHR', '2025-01-21 08:00:00', '2025-01-21 12:30:00', '2025-01-21 10:00:00', '2025-01-21 14:30:00', 'delayed', 'A6-FMA', 180, 6, 'A12', 'T3'),
+('FL-002', 'FZ102', 'LHR', 'DXB', '2025-01-21 14:00:00', '2025-01-21 23:30:00', NULL, NULL, 'cancelled', 'A6-FMB', 175, 6, 'B08', 'T3'),
+('FL-003', 'FZ103', 'DXB', 'JFK', '2025-01-21 16:30:00', '2025-01-22 02:15:00', '2025-01-21 18:30:00', '2025-01-22 04:15:00', 'delayed', 'A6-FMC', 190, 6, 'C15', 'T3'),
+('FL-004', 'FZ104', 'JFK', 'DXB', '2025-01-21 22:00:00', '2025-01-22 17:45:00', NULL, NULL, 'diverted', 'A6-FMD', 185, 6, 'D22', 'T3'),
+('FL-005', 'FZ105', 'DXB', 'BOM', '2025-01-21 10:15:00', '2025-01-21 14:45:00', '2025-01-21 11:45:00', '2025-01-21 16:15:00', 'delayed', 'A6-FME', 165, 6, 'E05', 'T3'),
+-- Add specific flight data from attached file
+('FL_001', 'FZ215', 'DXB', 'BOM', '2025-01-10 15:30:00', '2025-01-10 20:15:00', '2025-01-10 17:30:00', '2025-01-10 22:15:00', 'delayed', 'B737-001', 189, 6, 'T2-B12', 'T2'),
+('FL_002', 'FZ203', 'DXB', 'DEL', '2025-01-10 16:45:00', '2025-01-10 21:20:00', NULL, NULL, 'cancelled', 'B737MAX-001', 195, 6, 'T2-A08', 'T2'),
+('FL_003', 'FZ235', 'KHI', 'DXB', '2025-01-10 08:30:00', '2025-01-10 11:45:00', '2025-01-10 11:30:00', '2025-01-10 14:45:00', 'diverted', 'B737-002', 181, 6, 'T2-C15', 'T2'),
+('FL_004', 'FZ147', 'IST', 'DXB', '2025-01-10 21:15:00', '2025-01-11 03:30:00', '2025-01-10 22:00:00', '2025-01-11 04:15:00', 'delayed', 'B737MAX-002', 189, 6, 'T2-A15', 'T2'),
+('FL_005', 'FZ181', 'DXB', 'COK', '2025-01-10 14:20:00', '2025-01-10 19:45:00', '2025-01-10 15:50:00', '2025-01-10 21:15:00', 'delayed', 'B737-003', 175, 6, 'T2-B12', 'T2');
+
+-- Insert sample aircraft
+INSERT INTO aircraft (id, registration, aircraft_type, capacity, status, last_maintenance, next_maintenance, location) VALUES
+('A6-FMA', 'A6-FMA', 'Airbus A380', 550, 'active', '2025-01-15', '2025-02-15', 'DXB'),
+('A6-FMB', 'A6-FMB', 'Boeing 777-300ER', 350, 'active', '2025-01-10', '2025-02-10', 'LHR'),
+('A6-FMC', 'A6-FMC', 'Boeing 777-200LR', 300, 'active', '2025-01-12', '2025-02-12', 'JFK'),
+('A6-FMD', 'A6-FMD', 'Airbus A350-900', 320, 'maintenance', '2025-01-08', '2025-02-08', 'DXB'),
+('A6-FME', 'A6-FME', 'Boeing 737-800', 180, 'active', '2025-01-14', '2025-02-14', 'BOM'),
+-- Add aircraft for new flights
+('B737-001', 'A6-FZ1', 'Boeing 737-800', 189, 'active', '2025-01-05', '2025-02-05', 'DXB'),
+('B737MAX-001', 'A6-FZ2', 'Boeing 737 MAX 8', 195, 'active', '2025-01-06', '2025-02-06', 'DXB'),
+('B737-002', 'A6-FZ3', 'Boeing 737-800', 181, 'active', '2025-01-07', '2025-02-07', 'KHI'),
+('B737MAX-002', 'A6-FZ4', 'Boeing 737 MAX 8', 189, 'active', '2025-01-08', '2025-02-08', 'IST'),
+('B737-003', 'A6-FZ5', 'Boeing 737-800', 175, 'active', '2025-01-09', '2025-02-09', 'DXB');
+
+-- Insert sample disruptions
+INSERT INTO disruptions (id, flight_id, disruption_type_id, title, description, severity, status, reported_at, resolved_at, passengers_affected, crew_affected, connecting_flights_affected, estimated_delay_minutes, financial_impact, resolution_notes) VALUES
+('DISR-001', 'FL-001', 'TECH-001', 'Engine maintenance required', 'Routine engine inspection found minor issue requiring immediate attention', 'medium', 'active', '2025-01-21 06:30:00', NULL, 180, 6, 15, 120, 75000.00, NULL),
+('DISR-002', 'FL-002', 'WTHR-001', 'Severe weather at destination', 'Heavy fog at London Heathrow causing zero visibility', 'high', 'active', '2025-01-21 12:00:00', NULL, 175, 6, 8, NULL, 120000.00, NULL),
+('DISR-003', 'FL-003', 'ATCR-001', 'Air traffic control delay', 'Congestion at JFK causing extended holding patterns', 'medium', 'resolving', '2025-01-21 15:00:00', NULL, 190, 6, 12, 120, 45000.00, 'Alternative routing approved'),
+('DISR-004', 'FL-004', 'CREW-001', 'Crew availability issue', 'First officer called in sick, replacement crew being arranged', 'high', 'active', '2025-01-21 20:00:00', NULL, 185, 5, 22, 180, 95000.00, NULL),
+('DISR-005', 'FL-005', 'WTHR-002', 'Thunderstorm activity', 'Severe thunderstorms reported along flight path', 'medium', 'active', '2025-01-21 09:00:00', NULL, 165, 6, 5, 90, 35000.00, NULL),
+-- Add disruptions for new flights
+('DISR-006', 'FL_001', 'WTHR-003', 'Departure delayed due to sandstorm at DXB', 'Severe sandstorm conditions affecting visibility and operations', 'high', 'active', '2025-01-10 13:30:00', NULL, 189, 6, 8, 120, 85000.00, NULL),
+('DISR-007', 'FL_002', 'WTHR-004', 'Flight cancelled due to severe fog at DEL', 'Dense fog at Delhi causing zero visibility conditions', 'high', 'active', '2025-01-10 14:45:00', NULL, 195, 6, 5, NULL, 150000.00, NULL),
+('DISR-008', 'FL_003', 'WTHR-005', 'Diverted to AUH due to DXB closure', 'Dubai airport temporarily closed due to weather conditions', 'medium', 'active', '2025-01-10 06:30:00', NULL, 181, 6, 7, 180, 95000.00, NULL),
+('DISR-009', 'FL_004', 'TECH-002', 'Aircraft maintenance check delay', 'Required maintenance inspection taking longer than scheduled', 'medium', 'active', '2025-01-10 19:15:00', NULL, 189, 6, 4, 45, 35000.00, NULL),
+('DISR-010', 'FL_005', 'CREW-002', 'Crew duty time limitation', 'Crew approaching maximum duty time limits', 'medium', 'active', '2025-01-10 12:20:00', NULL, 175, 6, 3, 90, 45000.00, NULL);
+
+-- Insert sample airports
+INSERT INTO airports (iata_code, icao_code, name, city, country, timezone, latitude, longitude) VALUES
+('DXB', 'OMDB', 'Dubai International Airport', 'Dubai', 'United Arab Emirates', 'Asia/Dubai', 25.2532, 55.3657),
+('LHR', 'EGLL', 'London Heathrow Airport', 'London', 'United Kingdom', 'Europe/London', 51.4700, -0.4543),
+('JFK', 'KJFK', 'John F. Kennedy International Airport', 'New York', 'United States', 'America/New_York', 40.6413, -73.7781),
+('LAX', 'KLAX', 'Los Angeles International Airport', 'Los Angeles', 'United States', 'America/Los_Angeles', 33.9425, -118.4081),
+('BOM', 'VABB', 'Chhatrapati Shivaji Maharaj International Airport', 'Mumbai', 'India', 'Asia/Kolkata', 19.0896, 72.8656),
+-- Add missing airports for new flights
+('DEL', 'VIDP', 'Indira Gandhi International Airport', 'Delhi', 'India', 'Asia/Kolkata', 28.5562, 77.1000),
+('KHI', 'OPKC', 'Jinnah International Airport', 'Karachi', 'Pakistan', 'Asia/Karachi', 24.9056, 67.1608),
+('IST', 'LTFM', 'Istanbul Airport', 'Istanbul', 'Turkey', 'Europe/Istanbul', 41.2619, 28.7419),
+('COK', 'VOCI', 'Cochin International Airport', 'Kochi', 'India', 'Asia/Kolkata', 10.1520, 76.4019),
+('AUH', 'OMAA', 'Abu Dhabi International Airport', 'Abu Dhabi', 'United Arab Emirates', 'Asia/Dubai', 24.4330, 54.6511);
+
+-- Insert sample disruption types
+INSERT INTO disruption_types (id, category, name, description, priority_weight, cost_multiplier) VALUES
+('WTHR-001', 'weather', 'Fog', 'Low visibility due to fog conditions', 0.8, 1.5),
+('WTHR-002', 'weather', 'Thunderstorm', 'Severe weather with lightning and heavy rain', 0.9, 2.0),
+('WTHR-003', 'weather', 'Sandstorm', 'Sand or dust storm affecting airport operations', 0.85, 1.8),
+('WTHR-004', 'weather', 'Dense Fog', 'Extremely low visibility due to dense fog', 0.9, 2.2),
+('WTHR-005', 'weather', 'Airport Closure', 'Airport temporarily closed due to weather', 0.95, 3.0),
+('TECH-001', 'technical', 'Engine Issue', 'Aircraft engine malfunction or maintenance requirement', 0.95, 2.5),
+('TECH-002', 'technical', 'Maintenance Check', 'Scheduled or unscheduled maintenance requirements', 0.7, 1.5),
+('CREW-001', 'crew', 'Crew Availability', 'Flight crew scheduling or availability issues', 0.7, 1.8),
+('CREW-002', 'crew', 'Duty Time Limits', 'Crew duty time limitations and regulations', 0.6, 1.4),
+('ATCR-001', 'air_traffic', 'ATC Delay', 'Air traffic control imposed delays', 0.6, 1.2);
 
 COMMIT;
