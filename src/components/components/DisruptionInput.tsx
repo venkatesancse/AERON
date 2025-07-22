@@ -67,138 +67,53 @@ export function DisruptionInput({ onSelectFlight }) {
       setError(null);
 
       // Try to fetch from database API
-      const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
-      const response = await fetch(`${baseUrl}/api/flights/affected`);
+      const isProduction = window.location.hostname.includes('replit.dev');
+      const baseUrl = isProduction 
+        ? `https://${window.location.hostname.replace('-00-', '-01-')}/api`
+        : import.meta.env.VITE_API_URL;
+      const response = await fetch(`${baseUrl}/flights/affected`);
       if (!response.ok) {
         throw new Error("Failed to fetch flights from database");
       }
 
-      const flights = await response.json();
-      setAffectedFlights(flights);
-    } catch (err) {
-      console.error("Error fetching flights:", err);
-      setError("Failed to load flight data from database. Using demo data.");
+      const data = await response.json();
+      console.log("Fetched flights from database:", data);
 
-      // Fallback to demo data if database is not available
-      const demoFlights = [
-        {
-          id: "FL_001",
-          flightNumber: "FZ215",
-          origin: "DXB",
-          destination: "BOM",
-          originCity: "Dubai",
-          destinationCity: "Mumbai",
-          scheduledDeparture: "2025-01-10T15:30:00",
-          scheduledArrival: "2025-01-10T20:15:00",
-          currentStatus: "Delayed",
-          delay: 120,
-          aircraft: "B737-800",
-          gate: "T2-B12",
-          passengers: 189,
-          crew: 6,
-          disruptionType: "weather",
-          severity: "high",
-          impact: "Departure delayed due to sandstorm at DXB",
-          lastUpdate: "2 mins ago",
-          priority: "High",
-          connectionFlights: 8,
-          vipPassengers: 4,
-        },
-        {
-          id: "FL_002",
-          flightNumber: "FZ203",
-          origin: "DXB",
-          destination: "DEL",
-          originCity: "Dubai",
-          destinationCity: "Delhi",
-          scheduledDeparture: "2025-01-10T16:45:00",
-          scheduledArrival: "2025-01-10T21:20:00",
-          currentStatus: "Cancelled",
-          delay: null,
-          aircraft: "B737 MAX 8",
-          gate: "T2-A08",
-          passengers: 195,
-          crew: 6,
-          disruptionType: "weather",
-          severity: "high",
-          impact: "Flight cancelled due to severe fog at DEL",
-          lastUpdate: "5 mins ago",
-          priority: "Critical",
-          connectionFlights: 5,
-          vipPassengers: 3,
-        },
-        {
-          id: "FL_003",
-          flightNumber: "FZ235",
-          origin: "KHI",
-          destination: "DXB",
-          originCity: "Karachi",
-          destinationCity: "Dubai",
-          scheduledDeparture: "2025-01-10T08:30:00",
-          scheduledArrival: "2025-01-10T11:45:00",
-          currentStatus: "Diverted",
-          delay: 180,
-          aircraft: "B737-800",
-          gate: "T2-C15",
-          passengers: 181,
-          crew: 6,
-          disruptionType: "weather",
-          severity: "medium",
-          impact: "Diverted to AUH due to DXB closure",
-          lastUpdate: "8 mins ago",
-          priority: "High",
-          connectionFlights: 7,
-          vipPassengers: 2,
-        },
-        {
-          id: "FL_004",
-          flightNumber: "FZ147",
-          origin: "IST",
-          destination: "DXB",
-          originCity: "Istanbul",
-          destinationCity: "Dubai",
-          scheduledDeparture: "2025-01-10T21:15:00",
-          scheduledArrival: "2025-01-11T03:30:00",
-          currentStatus: "Delayed",
-          delay: 45,
-          aircraft: "B737 MAX 8",
-          gate: "T2-A15",
-          passengers: 189,
-          crew: 6,
-          disruptionType: "technical",
-          severity: "medium",
-          impact: "Aircraft maintenance check delay",
-          lastUpdate: "12 mins ago",
-          priority: "Medium",
-          connectionFlights: 4,
-          vipPassengers: 2,
-        },
-        {
-          id: "FL_005",
-          flightNumber: "FZ181",
-          origin: "DXB",
-          destination: "COK",
-          originCity: "Dubai",
-          destinationCity: "Kochi",
-          scheduledDeparture: "2025-01-10T14:20:00",
-          scheduledArrival: "2025-01-10T19:45:00",
-          currentStatus: "Delayed",
-          delay: 90,
-          aircraft: "B737-800",
-          gate: "T2-B12",
-          passengers: 175,
-          crew: 6,
-          disruptionType: "crew",
-          severity: "medium",
-          impact: "Crew duty time limitation",
-          lastUpdate: "15 mins ago",
-          priority: "Medium",
-          connectionFlights: 3,
-          vipPassengers: 1,
-        },
-      ];
+      // Transform API data to match frontend format
+      const transformedFlights = data.map((flight) => ({
+        id: flight.id,
+        flightNumber: flight.flightNumber || flight.flight_number,
+        route: flight.route,
+        origin: flight.route?.split(' → ')[0] || '',
+        destination: flight.route?.split(' → ')[1] || '',
+        originCity: flight.originCity || flight.origin_city,
+        destinationCity: flight.destinationCity || flight.destination_city,
+        scheduledDeparture: flight.scheduledDeparture || flight.scheduled_departure,
+        scheduledArrival: flight.scheduledArrival || flight.scheduled_arrival,
+        estimatedDeparture: flight.estimatedDeparture || flight.estimated_departure,
+        estimatedArrival: flight.estimatedArrival || flight.estimated_arrival,
+        currentStatus: flight.currentStatus || flight.current_status || 'Unknown',
+        delay: flight.delay || 0,
+        aircraft: flight.aircraft,
+        aircraftType: flight.aircraftType || flight.aircraft_type,
+        gate: flight.gate,
+        terminal: flight.terminal,
+        passengers: flight.passengers || 0,
+        crew: flight.crew || 0,
+        disruptionType: flight.disruptionType || flight.disruption_type || 'other',
+        severity: flight.severity || 'medium',
+        impact: flight.impact || 'Unknown impact',
+        lastUpdate: flight.lastUpdate || flight.last_update || 'Unknown',
+        priority: flight.priority || 'Medium',
+        connectionFlights: flight.connectionFlights || flight.connection_flights || 0,
+        vipPassengers: flight.vipPassengers || flight.vip_passengers || 0,
+      }));
 
-      setAffectedFlights(demoFlights);
+      setAffectedFlights(transformedFlights);
+    } catch (error) {
+      console.error("Database fetch failed:", error);
+      setError(`Failed to connect to database: ${error.message}`);
+      setAffectedFlights([]);
     } finally {
       setLoading(false);
     }
